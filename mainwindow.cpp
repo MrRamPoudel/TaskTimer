@@ -21,7 +21,11 @@ void MainWindow::startTimer() {
 }
 
 void MainWindow::stopTimer() {
-
+    timer->stop();
+    disconnect(timer, &QTimer::timeout, this, &MainWindow::showTime);
+    startTime = std::chrono::steady_clock::now();
+    ui->lcdNumber->display("00:00:00");
+    ui->textEdit->show();
 }
 
 void MainWindow::showTime() {
