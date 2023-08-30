@@ -1,6 +1,5 @@
 #include "mainwindow.h"
 #include "./ui_mainwindow.h"
-#include <QFinalState>
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
@@ -8,11 +7,13 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
     ui->lcdNumber->display("00:00:00");
     timer = new QTimer(this);
+
     //create states
     QState* s0 = new QState();
     QState* s1 = new QState();
     QState* s2 = new QState();
-    QFinalState * s3 = new QFinalState();
+
+    // Assign property and transition
     s1->assignProperty(ui->pushButton, "text", "Stop");
     s2->assignProperty(ui->pushButton, "text", "Start");
     s0->addTransition(ui->pushButton, &QPushButton::clicked,s1);
@@ -23,8 +24,6 @@ MainWindow::MainWindow(QWidget *parent)
     timeState.addState(s0);
     timeState.addState(s1);
     timeState.addState(s2);
-    timeState.addState(s3);
-
     //Set initial state
     timeState.setInitialState(s0);
 
