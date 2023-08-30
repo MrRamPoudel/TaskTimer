@@ -6,6 +6,7 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
     ui->lcdNumber->display("00:00:00");
+    timer = new QTimer(this);
 }
 
 MainWindow::~MainWindow()
@@ -13,7 +14,10 @@ MainWindow::~MainWindow()
     delete ui;
 }
 void MainWindow::startTimer() {
-
+    ui->textEdit->hide();
+    startTime = std::chrono::steady_clock::now();
+    connect(timer, &QTimer::timeout, this, &MainWindow::showTime);
+    timer->start(1000);
 }
 
 void MainWindow::stopTimer() {
