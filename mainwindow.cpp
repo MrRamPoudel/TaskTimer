@@ -29,5 +29,8 @@ void MainWindow::stopTimer() {
 }
 
 void MainWindow::showTime() {
-
+    auto rightNow = std::chrono::steady_clock::now();
+    auto timeDiff = std::chrono::duration_cast<std::chrono::seconds>(rightNow - startTime);
+    auto convertedDiff = QString::fromStdString(std::format("{0:%H:%M:%S}", timeDiff));
+    ui->lcdNumber->display(convertedDiff);
 }
