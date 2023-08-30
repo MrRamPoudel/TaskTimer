@@ -5,6 +5,7 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    ui->lcdNumber->display("00:00:00");
 }
 
 MainWindow::~MainWindow()
