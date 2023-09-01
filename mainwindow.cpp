@@ -1,11 +1,48 @@
 #include "mainwindow.h"
 #include "./ui_mainwindow.h"
+#include <bsoncxx/json.hpp>
+#include <mongocxx/client.hpp>
+#include <mongocxx/instance.hpp>
+#include <map>
+#include <string>
+#include "helper.h"
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
     ui->lcdNumber->display("00:00:00");
+    try
+    {
+        auto envVariables = Helper::readEnvFile(".env");
+        std::string mongoUri = envVariables["MONGODB_URI"];
+
+        // Create an instance.
+        mongocxx::instance inst{};
+
+        // Replace the connection string with your MongoDB deployment's connection string.
+        const auto uri = mongocxx::uri{envVariables["MONGODB_URI"]};
+
+        // Set the version of the Stable API on the client.
+        mongocxx::options::client client_options;
+        const auto api = mongocxx::options::server_api{ mongocxx::options::server_api::version::k_version_1 };
+        client_options.server_api_opts(api);
+
+        // Setup the connection and get a handle on the "admin" database.
+        mongocxx::client conn{ uri, client_options };
+        mongocxx::database db = conn["gymdb"];
+
+        // Ping the database.
+        const auto ping_cmd = bsoncxx::builder::basic::make_document(bsoncxx::builder::basic::kvp("ping", 1));
+        db.run_command(ping_cmd.view());
+        qDebug("Pinged your deployment. You successfully connected to MongoDB!");
+    }
+    catch (const std::exception& e)
+    {
+        // Handle errors.
+        qDebug("Exception: ", qPrintable(e.what() ));
+    }
+
     timer = new QTimer(this);
 
     //create states
