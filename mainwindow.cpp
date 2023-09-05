@@ -15,11 +15,6 @@ MainWindow::MainWindow(QWidget *parent)
     try
     {
         auto envVariables = Helper::readEnvFile(".env");
-        std::string mongoUri = envVariables["MONGODB_URI"];
-
-        // Create an instance.
-        mongocxx::instance inst{};
-
         // Replace the connection string with your MongoDB deployment's connection string.
         const auto uri = mongocxx::uri{envVariables["MONGODB_URI"]};
 
@@ -29,9 +24,9 @@ MainWindow::MainWindow(QWidget *parent)
         client_options.server_api_opts(api);
 
         // Setup the connection and get a handle on the "admin" database.
-        mongocxx::client conn{ uri, client_options };
-        mongocxx::database db = conn["gymdb"];
-
+        this->client = mongocxx::client(uri, client_options);
+        this->db = this->client[envVariables["DATABASE"].c_str()];
+        this->timeEntries = db[envVariables["COLLECTION"].c_str()];
         // Ping the database.
         const auto ping_cmd = bsoncxx::builder::basic::make_document(bsoncxx::builder::basic::kvp("ping", 1));
         db.run_command(ping_cmd.view());
@@ -67,7 +62,6 @@ MainWindow::MainWindow(QWidget *parent)
     //connect state to actions
     connect(s1, &QState::entered, this, &MainWindow::startTimer);
     connect(s2, &QState::entered, this, &MainWindow::stopTimer);
-
     timeState.start();
 }
 
@@ -85,6 +79,20 @@ void MainWindow::startTimer() {
 void MainWindow::stopTimer() {
     timer->stop();
     disconnect(timer, &QTimer::timeout, this, &MainWindow::showTime);
+
+    auto elapsedTaskTime = std::format("{0:%H:%M:%S}",std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now()-startTime));
+    auto now =std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
+    //Store problem number, date, and time it took to complete
+    const auto entry = bsoncxx::builder::basic::make_document(bsoncxx::builder::basic::kvp("problemNum", ui->textEdit->toPlainText().toStdString()),
+                                                              bsoncxx::builder::basic::kvp("dateCompleted", bsoncxx::types::b_date(now)),
+                                                              bsoncxx::builder::basic::kvp("elapsedTaskTime", elapsedTaskTime));
+    try{
+        this->timeEntries.insert_one(entry.view());
+    }
+    catch(const std::exception& e){
+        qDebug("Exception: ", qPrintable(e.what() ));
+    }
+
     startTime = std::chrono::steady_clock::now();
     ui->lcdNumber->display("00:00:00");
     ui->textEdit->show();

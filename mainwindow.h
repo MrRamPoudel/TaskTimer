@@ -5,6 +5,9 @@
 #include <chrono>
 #include <QTimer>
 #include <QStateMachine>
+#include <bsoncxx/json.hpp>
+#include <mongocxx/client.hpp>
+#include <mongocxx/instance.hpp>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -24,7 +27,10 @@ private:
     std::chrono::steady_clock::time_point startTime;
     QStateMachine timeState;
     void showTime();
-
+    mongocxx::instance inst{};
+    mongocxx::client client;
+    mongocxx::database db;
+    mongocxx::collection timeEntries;
 private slots:
     void startTimer();
     void stopTimer();
