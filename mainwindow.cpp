@@ -5,31 +5,17 @@
 #include <mongocxx/instance.hpp>
 #include <map>
 #include <string>
-#include "helper.h"
+
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
-    , ui(new Ui::MainWindow)
+    , ui(new Ui::MainWindow),db(config)
 {
     ui->setupUi(this);
     ui->lcdNumber->display("00:00:00");
     try
     {
-        auto envVariables = Helper::readEnvFile(".env");
-        // Replace the connection string with your MongoDB deployment's connection string.
-        const auto uri = mongocxx::uri{envVariables["MONGODB_URI"]};
-
-        // Set the version of the Stable API on the client.
-        mongocxx::options::client client_options;
-        const auto api = mongocxx::options::server_api{ mongocxx::options::server_api::version::k_version_1 };
-        client_options.server_api_opts(api);
-
-        // Setup the connection and get a handle on the "admin" database.
-        this->client = mongocxx::client(uri, client_options);
-        this->db = this->client[envVariables["DATABASE"].c_str()];
-        this->timeEntries = db[envVariables["COLLECTION"].c_str()];
-        // Ping the database.
         const auto ping_cmd = bsoncxx::builder::basic::make_document(bsoncxx::builder::basic::kvp("ping", 1));
-        db.run_command(ping_cmd.view());
+        db.runCommand(ping_cmd);
         qDebug("Pinged your deployment. You successfully connected to MongoDB!");
     }
     catch (const std::exception& e)
@@ -87,12 +73,11 @@ void MainWindow::stopTimer() {
                                                               bsoncxx::builder::basic::kvp("dateCompleted", bsoncxx::types::b_date(now)),
                                                               bsoncxx::builder::basic::kvp("elapsedTaskTime", elapsedTaskTime));
     try{
-        this->timeEntries.insert_one(entry.view());
+        this->db.registerTime(entry);
     }
     catch(const std::exception& e){
         qDebug("Exception: ", qPrintable(e.what() ));
     }
-
     startTime = std::chrono::steady_clock::now();
     ui->lcdNumber->display("00:00:00");
     ui->textEdit->show();

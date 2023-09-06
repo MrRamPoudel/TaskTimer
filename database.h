@@ -2,7 +2,7 @@
 #define DATABASE_H
 
 #include <bsoncxx/json.hpp>
-#include <bsoncxx/builder/basic/document.hpp>
+#include <bsoncxx/document/value.hpp>
 #include <mongocxx/client.hpp>
 #include <mongocxx/instance.hpp>
 #include <map>
@@ -10,8 +10,10 @@
 class Database
 {
 public:
-    Database(std::map<std::string, std::string> & databaseConfig);
-    void registerTime(const bsoncxx::builder::basic::document & val);
+    Database() = default;
+    Database(const std::map<std::string, std::string> & databaseConfig);
+    void registerTime(const bsoncxx::document::value & val);
+    void runCommand(const bsoncxx::document::value & val);
 private:
     mongocxx::instance inst{};
     mongocxx::client client;
