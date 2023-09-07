@@ -5,24 +5,27 @@
 #include <mongocxx/instance.hpp>
 #include <map>
 #include <string>
+#include <nlohmann/json.hpp>
+#include <curl/curl.h>
+#include <QTextStream>
+using json = nlohmann::json;
+
+// partial specialization (full specialization works too)
+namespace nlohmann {
+template<typename Clock, typename Duration>
+struct adl_serializer<std::chrono::time_point<Clock, Duration>> {
+    static void to_json(json& j, const std::chrono::time_point<Clock, Duration>& tp) {
+        j = std::chrono::duration_cast<std::chrono::milliseconds>(tp.time_since_epoch()).count();
+    }
+};
+}
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
-    , ui(new Ui::MainWindow),db(config)
+    , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
     ui->lcdNumber->display("00:00:00");
-    try
-    {
-        const auto ping_cmd = bsoncxx::builder::basic::make_document(bsoncxx::builder::basic::kvp("ping", 1));
-        db.runCommand(ping_cmd);
-        qDebug("Pinged your deployment. You successfully connected to MongoDB!");
-    }
-    catch (const std::exception& e)
-    {
-        // Handle errors.
-        qDebug("Exception: ", qPrintable(e.what() ));
-    }
 
     timer = new QTimer(this);
 
@@ -55,6 +58,36 @@ MainWindow::~MainWindow()
 {
     delete ui;
 }
+
+void MainWindow::submitEntry(const int &problemNumber, const std::chrono::time_point<std::chrono::system_clock> &dateCompleted, const std::string &elapsedTime)
+{
+    using json = nlohmann::json;
+    json data;
+    data["dateCompleted"] = dateCompleted;
+    data["problemNumber"] = problemNumber;
+    data["elapsedTaskTime"] = elapsedTime;
+    std::string jsonData = data.dump();
+    CURL * curl;
+    CURLcode res;
+    curl = curl_easy_init();
+    if(curl) {
+        curl_easy_setopt(curl, CURLOPT_URL, "http://localhost:3000/createEntry");
+        curl_easy_setopt(curl, CURLOPT_POST, 1L);
+
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, jsonData.c_str());
+        struct curl_slist *headers = NULL;
+        headers = curl_slist_append(headers, "Content-Type: application/json");
+        res = curl_easy_perform(curl);
+
+        if(res != CURLE_OK){
+            qDebug() <<"curl_easy_perform() failed\n";
+        }
+
+        curl_easy_cleanup(curl);
+        curl_slist_free_all(headers);
+    }
+
+}
 void MainWindow::startTimer() {
     ui->textEdit->hide();
     startTime = std::chrono::steady_clock::now();
@@ -67,17 +100,9 @@ void MainWindow::stopTimer() {
     disconnect(timer, &QTimer::timeout, this, &MainWindow::showTime);
 
     auto elapsedTaskTime = std::format("{0:%H:%M:%S}",std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now()-startTime));
-    auto now =std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
-    //Store problem number, date, and time it took to complete
-    const auto entry = bsoncxx::builder::basic::make_document(bsoncxx::builder::basic::kvp("problemNum", ui->textEdit->toPlainText().toStdString()),
-                                                              bsoncxx::builder::basic::kvp("dateCompleted", bsoncxx::types::b_date(now)),
-                                                              bsoncxx::builder::basic::kvp("elapsedTaskTime", elapsedTaskTime));
-    try{
-        this->db.registerTime(entry);
-    }
-    catch(const std::exception& e){
-        qDebug("Exception: ", qPrintable(e.what() ));
-    }
+    auto now = std::chrono::system_clock::now();
+    int problemNum =  ui->textEdit->toPlainText().toInt();
+    submitEntry(problemNum, now, elapsedTaskTime);
     startTime = std::chrono::steady_clock::now();
     ui->lcdNumber->display("00:00:00");
     ui->textEdit->show();

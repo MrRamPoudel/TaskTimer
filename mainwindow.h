@@ -8,8 +8,8 @@
 #include <bsoncxx/json.hpp>
 #include <mongocxx/client.hpp>
 #include <mongocxx/instance.hpp>
-#include "database.h"
 #include "helper.h"
+
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
@@ -28,8 +28,8 @@ private:
     QTimer * timer;
     std::chrono::steady_clock::time_point startTime;
     QStateMachine timeState;
+    void submitEntry(const int & problemNumber, const std::chrono::time_point<std::chrono::system_clock> & dateCompleted, const std::string & elapsedTime);;
     void showTime();
-    Database db;
 private slots:
     void startTimer();
     void stopTimer();

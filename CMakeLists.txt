@@ -9,10 +9,12 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+find_package(CURL)
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS StateMachine)
 find_package(mongocxx REQUIRED)
+include_directories(dependencies/)
 set(PROJECT_SOURCES
         main.cpp
         mainwindow.cpp
@@ -49,6 +51,7 @@ endif()
 target_link_libraries(LeetCodeTimer PRIVATE mongo::mongocxx_shared)
 target_link_libraries(LeetCodeTimer PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
 target_link_libraries(LeetCodeTimer PRIVATE Qt6::StateMachine)
+target_link_libraries(LeetCodeTimer PRIVATE CURL::libcurl)
 get_target_property(LIBMONGOCXX_DEFINITIONS mongo::mongocxx_shared INTERFACE_COMPILE_DEFINITIONS)
 list(FIND LIBMONGOCXX_DEFINITIONS "BSONCXX_STATIC" LIST_IDX)
 if (${LIST_IDX} GREATER -1)
