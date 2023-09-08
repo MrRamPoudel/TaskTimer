@@ -13,7 +13,6 @@ find_package(CURL)
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS StateMachine)
-find_package(mongocxx REQUIRED)
 include_directories(dependencies/)
 set(PROJECT_SOURCES
         main.cpp
@@ -29,7 +28,6 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         ${PROJECT_SOURCES}
         .env
         helper.h helper.cpp
-        database.h database.cpp
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET LeetCodeTimer APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
@@ -48,19 +46,11 @@ else()
         )
     endif()
 endif()
-target_link_libraries(LeetCodeTimer PRIVATE mongo::mongocxx_shared)
+
 target_link_libraries(LeetCodeTimer PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
 target_link_libraries(LeetCodeTimer PRIVATE Qt6::StateMachine)
 target_link_libraries(LeetCodeTimer PRIVATE CURL::libcurl)
-get_target_property(LIBMONGOCXX_DEFINITIONS mongo::mongocxx_shared INTERFACE_COMPILE_DEFINITIONS)
-list(FIND LIBMONGOCXX_DEFINITIONS "BSONCXX_STATIC" LIST_IDX)
-if (${LIST_IDX} GREATER -1)
-    message(FATAL_ERROR "Expected BSONCXX_STATIC to not be defined")
-endif()
-list(FIND LIBMONGOCXX_DEFINITIONS "MONGOCXX_STATIC" LIST_IDX)
-if (${LIST_IDX} GREATER -1)
-    message(FATAL_ERROR "Expected MONGOCXX_STATIC to not be defined")
-endif()
+
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
 # If you are developing for iOS or macOS you should consider setting an
 # explicit, fixed bundle identifier manually though.

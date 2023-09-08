@@ -5,9 +5,6 @@
 #include <chrono>
 #include <QTimer>
 #include <QStateMachine>
-#include <bsoncxx/json.hpp>
-#include <mongocxx/client.hpp>
-#include <mongocxx/instance.hpp>
 #include "helper.h"
 
 QT_BEGIN_NAMESPACE
@@ -28,7 +25,7 @@ private:
     QTimer * timer;
     std::chrono::steady_clock::time_point startTime;
     QStateMachine timeState;
-    void submitEntry(const int & problemNumber, const std::chrono::time_point<std::chrono::system_clock> & dateCompleted, const std::string & elapsedTime);;
+    void submitEntry(const int & problemNumber, const std::chrono::time_point<std::chrono::system_clock> & dateCompleted, const long & elapsedTime);;
     void showTime();
 private slots:
     void startTimer();

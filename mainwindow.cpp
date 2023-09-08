@@ -1,13 +1,10 @@
 #include "mainwindow.h"
 #include "./ui_mainwindow.h"
-#include <bsoncxx/json.hpp>
-#include <mongocxx/client.hpp>
-#include <mongocxx/instance.hpp>
 #include <map>
 #include <string>
 #include <nlohmann/json.hpp>
 #include <curl/curl.h>
-#include <QTextStream>
+
 using json = nlohmann::json;
 
 // partial specialization (full specialization works too)
@@ -59,7 +56,7 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-void MainWindow::submitEntry(const int &problemNumber, const std::chrono::time_point<std::chrono::system_clock> &dateCompleted, const std::string &elapsedTime)
+void MainWindow::submitEntry(const int &problemNumber, const std::chrono::time_point<std::chrono::system_clock> &dateCompleted, const long &elapsedTime)
 {
     using json = nlohmann::json;
     json data;
@@ -98,11 +95,11 @@ void MainWindow::startTimer() {
 void MainWindow::stopTimer() {
     timer->stop();
     disconnect(timer, &QTimer::timeout, this, &MainWindow::showTime);
-
+    auto diffTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - startTime).count();
     auto elapsedTaskTime = std::format("{0:%H:%M:%S}",std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now()-startTime));
     auto now = std::chrono::system_clock::now();
     int problemNum =  ui->textEdit->toPlainText().toInt();
-    submitEntry(problemNum, now, elapsedTaskTime);
+    submitEntry(problemNum,now, diffTime);
     startTime = std::chrono::steady_clock::now();
     ui->lcdNumber->display("00:00:00");
     ui->textEdit->show();
