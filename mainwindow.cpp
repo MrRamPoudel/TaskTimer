@@ -74,6 +74,7 @@ void MainWindow::submitEntry(const int &problemNumber, const std::chrono::time_p
         curl_easy_setopt(curl, CURLOPT_POSTFIELDS, jsonData.c_str());
         struct curl_slist *headers = NULL;
         headers = curl_slist_append(headers, "Content-Type: application/json");
+        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
         res = curl_easy_perform(curl);
 
         if(res != CURLE_OK){
