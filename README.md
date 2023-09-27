@@ -10,3 +10,4 @@
 ## Libraries
 - Nlohmann's JSON for creating json data
 - cURL for sending post request
+- QT for GUI
