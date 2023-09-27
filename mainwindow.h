@@ -5,7 +5,6 @@
 #include <chrono>
 #include <QTimer>
 #include <QStateMachine>
-#include "helper.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -21,7 +20,6 @@ public:
 
 private:
     Ui::MainWindow *ui;
-    std::map<std::string, std::string> config = Helper::readEnvFile(".env");
     QTimer * timer;
     std::chrono::steady_clock::time_point startTime;
     QStateMachine timeState;
